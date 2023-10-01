@@ -11,7 +11,7 @@ export function useSpotify(
     const [sdk, setSdk] = useState<SpotifyApi | null>(null);
     const { current: activeScopes } = useRef(scopes);
 
-    useEffect(() => {
+    const getSdk = async () => {
         // OAuthで認証認可する
         const auth = new AuthorizationCodeWithPKCEStrategy(
             clientId, 
@@ -22,24 +22,26 @@ export function useSpotify(
             auth,
             config
         );
-        (async () => {
-            try {
-                // 最初の認証とリダイレクトを実施する。
-                const { authenticated } = await spotifyApi.authenticate();
+        try {
+            // 最初の認証とリダイレクトを実施する。
+            const { authenticated } = await spotifyApi.authenticate();
 
-                if (authenticated) {
-                    // 認証に成功した場合は戻り値用にstateにも設定しておく
-                    setSdk(() => spotifyApi);
-                }
-            } catch (e: Error | unknown) {
-                const error = e as Error;
-                if (error && error.message && error.message.includes("No verifier found in cache")) {
-                    console.error("ReactでUseEffectを2回呼び出した場合のみこのエラーになるらしい", error);
-                } else {
-                    console.error(e);
-                }
+            if (authenticated) {
+                // 認証に成功した場合は戻り値用にstateにも設定しておく
+                setSdk(() => spotifyApi);
             }
-        })();
+        } catch (e: Error | unknown) {
+            const error = e as Error;
+            if (error && error.message && error.message.includes("No verifier found in cache")) {
+                console.error("ReactでUseEffectを2回呼び出した場合のみこのエラーになるらしい", error);
+            } else {
+                console.error(e);
+            }
+        }
+    };
+
+    useEffect(() => {
+        getSdk()
     }, [clientId, redirectUrl, config, activeScopes]);
 
     return sdk;
