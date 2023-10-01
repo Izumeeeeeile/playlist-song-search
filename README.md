@@ -1,2 +1,2 @@
 # playlist-song-search
-Retrieve all playlists of authenticated Spotify users and search for songs in the retrieved playlists
+認証されたSpotifyユーザーのすべてのプレイリストを取得し、取得したプレイリスト内の曲を検索する。
