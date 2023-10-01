@@ -1,5 +1,5 @@
 import { Scopes} from '@spotify/web-api-ts-sdk';
-import { useSpotify } from '../hooks/useSpotify';
+import { useSpotify } from './useSpotify';
 
 export function useSpotifySdk() {
     const clientId :string = process.env.REACT_APP_SPOTIFY_CLIENT_ID === undefined ? "" : process.env.REACT_APP_SPOTIFY_CLIENT_ID;

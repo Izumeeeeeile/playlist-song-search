@@ -1,6 +1,6 @@
 import { FC , createContext, useContext, ReactNode } from 'react';
 import { SpotifyApi } from '@spotify/web-api-ts-sdk';
-import { useSpotifySdk } from '../hooks/getSpotifySdk';
+import { useSpotifySdk } from '../hooks/useSpotifySdk';
 
 export type SpotifyContextType = {
     sdk: SpotifyApi | undefined
