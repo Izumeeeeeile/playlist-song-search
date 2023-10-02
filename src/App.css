@@ -56,3 +56,21 @@
   max-height: 100%;
   border: 2px solid #e9f9fc;
 }
+
+.trackInfo {
+  color: #eaf0ff;
+  display: flex;
+  flex-direction: column;
+  padding-left: 10px;
+}
+
+.trackDetail {
+  padding-left: 10px;
+  width: 100%;
+ }
+
+.trackName {
+  color: #fff;
+  text-decoration: none; 
+  font-weight: bold;
+}

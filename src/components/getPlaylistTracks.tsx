@@ -86,12 +86,33 @@ const PlaylistItems: FC<Props> = (props) => {
      </div>;
 };
 
+const handleButtonClick = (link: string) => window.open(link);
+
+const sImageStyles = {
+  width: 100,
+  height: 100
+};
 
 const playListTracks = (tracks: Track[]) => Object.values(tracks).map((trackItem : Track) => {
   return (
-    <div>
-      <td>{trackItem.name}</td>
-      <td>{trackItem.artists[0].name}</td>
+    <div className='list-items' onClick={() => handleButtonClick(trackItem.external_urls.spotify)}>
+        <div role='button' className="trackDetail">
+            <div className='item-list-image-area'>
+                <div style={sImageStyles}>
+                    <img className="s-image" src={trackItem.album.images[0].url}></img>
+                </div>
+            </div>
+            <div className='trackInfo'>
+                <div>
+                    <p className="trackName">
+                        {trackItem.name}
+                    </p>
+                    <div>
+                        <span>{trackItem.artists[0].name}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
   );
 });
