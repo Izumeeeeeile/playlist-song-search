@@ -1,53 +1,45 @@
 import { FC, useEffect, useState } from "react";
-import { SpotifyApi, Scopes,Playlist } from '@spotify/web-api-ts-sdk';
-import { useSpotify } from '../hooks/useSpotify'
+import { SpotifyApi, Scopes, Playlist } from '@spotify/web-api-ts-sdk';
 import { useSpotifySdkContext } from "../provider/SpotifySdkProviders";
+import { Link } from 'react-router-dom';
 function SearchPlaylists() {
-  
-    // const clientId :string = process.env.REACT_APP_SPOTIFY_CLIENT_ID == undefined ? "" : process.env.REACT_APP_SPOTIFY_CLIENT_ID;
-    // const redirectUri = `${window.location.origin}`+"/playLists"; 
-    // const sdk = useSpotify(
-    //   clientId, 
-    //   redirectUri, 
-    //   Scopes.userDetails
-    // );
     const sdk = useSpotifySdkContext().sdk;
-    
+
     return sdk
-      ? (<SpotifyPlaylists sdk={sdk} />) 
-      : (<></>);
-  }
-  
-function SpotifyPlaylists({ sdk }: { sdk: SpotifyApi}) {
-  const [playlistDetails, setPlaylistDetail] = useState<Playlist[]>({} as Playlist[]);
+        ? (<SpotifyPlaylists sdk={sdk} />)
+        : (<></>);
+}
+
+function SpotifyPlaylists({ sdk }: { sdk: SpotifyApi }) {
+    const [playlistDetails, setPlaylistDetail] = useState<Playlist[]>({} as Playlist[]);
     useEffect(() => {
-      (async () => {
-        const profile = await sdk.currentUser.profile();
-  
-        const playlists = await sdk.playlists.getUsersPlaylists(profile.id);
-  
-        const playlistTrackIds : string[] = playlists.items.map((item) => item.id);
-  
-        const playlistDetails : Playlist[] = await Promise.all(
-          playlistTrackIds.map(async (trackId) => {
-            const playlist =  await sdk.playlists.getPlaylist(trackId);
-            return playlist;
-          })
-        );
-        setPlaylistDetail(() => playlistDetails)
-      })();
+        (async () => {
+            const profile = await sdk.currentUser.profile();
+
+            const playlists = await sdk.playlists.getUsersPlaylists(profile.id);
+
+            const playlistTrackIds: string[] = playlists.items.map((item) => item.id);
+
+            const playlistDetails: Playlist[] = await Promise.all(
+                playlistTrackIds.map(async (trackId) => {
+                    const playlist = await sdk.playlists.getPlaylist(trackId);
+                    return playlist;
+                })
+            );
+            setPlaylistDetail(() => playlistDetails)
+        })();
     }, [sdk]);
-  
+
     return (
-      <>
-        <div className="content">
-            <PlaylistsItem playlistDetails={playlistDetails}/>
-        </div>
-      </>
-   );
+        <>
+            <div className="content">
+                <PlaylistsItem playlistDetails={playlistDetails} />
+            </div>
+        </>
+    );
 };
-  
 const handleButtonClick = (link: string) => window.open(link);
+
 
 const sImageStyles = {
     width: 100,
@@ -59,8 +51,10 @@ interface Props {
 }
 
 const playlistItemDom = (playlistDetails: Playlist[]) => Object.values(playlistDetails).map((playlistDetail) => {
+    let trackids: string = playlistDetail?.tracks?.items?.map((playlistDetail) => "trackIds=" + playlistDetail.track.id).join("&");
+    const linkstr = "./playlistTracks?" + trackids
     return (
-        <div className='list-items' onClick={() => handleButtonClick(playlistDetail.external_urls.spotify)}>
+        <div className='list-items' onClick={() => handleButtonClick(linkstr)}>
             <div role='button' className="playlistDetail">
                 <div className='item-list-image-area'>
                     <div style={sImageStyles}>
@@ -87,3 +81,5 @@ const PlaylistsItem: FC<Props> = (props) => {
 };
 
 export default SearchPlaylists;
+
+
