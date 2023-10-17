@@ -1,7 +1,8 @@
 import { FC, useEffect, useState } from "react";
-import { SpotifyApi, Scopes, Playlist } from '@spotify/web-api-ts-sdk';
-import { useSpotifySdkContext } from "../provider/SpotifySdkProviders";
 import { Link } from 'react-router-dom';
+import { SpotifyApi, Playlist, Page, PlaylistedTrack, MaxInt } from '@spotify/web-api-ts-sdk';
+import { useSpotifySdkContext } from "../provider/SpotifySdkProviders";
+
 function SearchPlaylists() {
     const sdk = useSpotifySdkContext().sdk;
 
@@ -11,50 +12,63 @@ function SearchPlaylists() {
 }
 
 function SpotifyPlaylists({ sdk }: { sdk: SpotifyApi }) {
-    const [playlistDetails, setPlaylistDetail] = useState<Playlist[]>({} as Playlist[]);
+    const [playlistDetails, setPlaylistDetail] = useState<Playlist[]>([]);
+    const [trackIdMap, setTrackIdMapState] = useState<Map<string, string[][]>>(new Map<string, string[][]>());
     useEffect(() => {
         (async () => {
             const profile = await sdk.currentUser.profile();
 
             const playlists = await sdk.playlists.getUsersPlaylists(profile.id);
-
+            
             const playlistTrackIds: string[] = playlists.items.map((item) => item.id);
 
             const playlistDetails: Playlist[] = await Promise.all(
                 playlistTrackIds.map(async (trackId) => {
-                    const playlist = await sdk.playlists.getPlaylist(trackId);
+                    let playlist = await sdk.playlists.getPlaylist(trackId);
                     return playlist;
                 })
             );
             setPlaylistDetail(() => playlistDetails)
+
+            const trackIdMap : Map<string, string[][]> = await setTrackIdsMap(playlistDetails, sdk);
+            setTrackIdMapState(trackIdMap);
         })();
     }, [sdk]);
 
     return (
         <>
             <div className="content">
-                <PlaylistsItem playlistDetails={playlistDetails} />
+                <PlaylistsItem playlistDetails={playlistDetails} trackIdMap={trackIdMap} />
             </div>
         </>
     );
 };
-const handleButtonClick = (link: string) => window.open(link);
 
+
+interface Props {
+    playlistDetails: Playlist[],
+    trackIdMap: Map<string, string[][]>
+}
+
+const PlaylistsItem: FC<Props> = (props) => {
+    return <div className="main-area">
+            <h1>Playlist一覧</h1>
+            {playlistItemDom(props.playlistDetails, props.trackIdMap)}
+        </div>;
+};
 
 const sImageStyles = {
     width: 100,
     height: 100
 };
 
-interface Props {
-    playlistDetails: Playlist[]
-}
-
-const playlistItemDom = (playlistDetails: Playlist[]) => Object.values(playlistDetails).map((playlistDetail) => {
-    let trackids: string = playlistDetail?.tracks?.items?.map((playlistDetail) => "trackIds=" + playlistDetail.track.id).join("&");
-    const linkstr = "./playlistTracks?" + trackids
+const playlistItemDom = (playlistDetails: Playlist[], trackIdMap: Map<string, string[][]>) => 
+    Object.values(playlistDetails).map((playlistDetail) => {
+    
+    const linkstr = "/playlistTracks?playListId=" + playlistDetail.id
+    const trackIdMapData = trackIdMap.get(playlistDetail.id);
     return (
-        <div className='list-items' onClick={() => handleButtonClick(linkstr)}>
+        <div className='list-items'>
             <div role='button' className="playlistDetail">
                 <div className='item-list-image-area'>
                     <div style={sImageStyles}>
@@ -72,13 +86,66 @@ const playlistItemDom = (playlistDetails: Playlist[]) => Object.values(playlistD
                     </div>
                 </div>
             </div>
+            <Link to = {linkstr} state={{trackIdMapData : trackIdMapData , playlistName: playlistDetail.name}}>開く</Link>
         </div>
     )
 });
 
-const PlaylistsItem: FC<Props> = (props) => {
-    return <div className="main-area">{playlistItemDom(props.playlistDetails)}</div>;
-};
+// https://zenn.dev/nbr41to/articles/e76c41cb9032cd
+const getParams = (params: string): { [key: string]: string } => {
+    const paramsArray = params.split('?')[1].split('&')
+    const paramsObject: { [key: string]: string } = {}
+    paramsArray.forEach(param => {
+      paramsObject[param.split('=')[0]] = param.split('=')[1]
+    });
+    return paramsObject;
+}
+
+const sliceByNumber = (array: string[], limit: number) => {
+    return array.flatMap((_, i, a) => i % limit ? [] : [a.slice(i, i + limit)]);
+}
+
+const setTrackIdsMap = async (playlistDetails: Playlist[], sdk: SpotifyApi) => {   
+    const trackIdMap = new Map<string, string[][]>();
+    for (const d of playlistDetails) {
+        const tracks = d.tracks;
+        if (tracks.total >= 100) {
+            let offset = tracks.next != undefined 
+                            ? Number(getParams(tracks.next)["offset"]) 
+                            : undefined
+                            
+            let sincelist = sliceByNumber(tracks.items?.map((d) => d.track.id), 50)
+            trackIdMap.set(d.id, sincelist);
+                            
+            while (offset !== undefined) {
+
+                let playlistItems = await sdk.playlists.getPlaylistItems(
+                    d.id,
+                    undefined,
+                    undefined,
+                    undefined,
+                    offset
+                );
+                let trackIds = trackIdMap.get(d.id);
+                if (trackIds) {
+                    let offsetPlayListMapTrackIds = playlistItems.items?.map(
+                        (d) => d.track.id
+                        )
+                    let sincelist = sliceByNumber(offsetPlayListMapTrackIds, 50)
+                    sincelist.map(s => trackIds?.push(s))
+                    trackIdMap.set(d.id, trackIds)
+                }
+
+                offset = playlistItems.next != undefined 
+                            ? Number(getParams(playlistItems.next)["offset"]) 
+                            : undefined
+            }
+        } else {
+            trackIdMap.set(d.id, [tracks.items?.map((d) => d.track.id)]);
+        }
+    };
+    return trackIdMap;
+}
 
 export default SearchPlaylists;
 

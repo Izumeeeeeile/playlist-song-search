@@ -1,32 +1,35 @@
 import { FC, useEffect, useState, useRef } from "react";
-import {useSearchParams} from 'react-router-dom';
+import {useSearchParams, useLocation } from 'react-router-dom';
 import { SpotifyApi, Track } from '@spotify/web-api-ts-sdk';
 import { useSpotifySdkContext } from "../provider/SpotifySdkProviders";
+import '../assets/css/PlaylistTrack.css'
+
+interface locationState {
+  trackIdMapData: string[][],
+  playlistName: string
+}
 
 function GetPlaylistItems() {
     const sdk = useSpotifySdkContext().sdk;
-    const [searchParams] = useSearchParams();
-    return sdk
-      ? (<SpotifyPlaylistItems sdk={sdk} trackIds={searchParams.getAll("trackIds")} />) 
+    const [search] = useSearchParams();
+    const { trackIdMapData, playlistName } = useLocation().state as locationState;
+    const playListId = search.get("playListId");
+    return sdk && playListId
+      ? (<SpotifyPlaylistItems sdk={sdk} trackIds={trackIdMapData} playlistName={playlistName} />) 
       : (<></>);
 }
 
-function SpotifyPlaylistItems({ sdk, trackIds }: { sdk: SpotifyApi, trackIds: string[]}) {
+function SpotifyPlaylistItems({ sdk, trackIds, playlistName }: { sdk: SpotifyApi, trackIds: string[][], playlistName: string}) {
 
-    const sliceByNumber = (array: string[], limit: number) => {
-      return array.flatMap((_, i, a) => i % limit ? [] : [a.slice(i, i + limit)]);
-    }
-
-    const [tracks, setTracks] = useState<Track[]>({} as Track[]);
-    const [trackIdsState, setTrackIds] = useState<string[]>({} as string[]);
-      useEffect(() => {
-        if (trackIdsState === trackIds) {
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [trackIdsState, setTrackIds] = useState<string[][]>([]);
+  useEffect(() => {
+      if (trackIdsState === trackIds) {
           return;
-        }
-        const sliceTrackIds: string[][] = sliceByNumber(trackIds, 50);
-        (async () => {
+      }
+      (async () => {
             let tracks: Track[] = []
-            for (const property of sliceTrackIds) {
+            for (const property of trackIds) {
               try {
                 let apiresult = await sdk.tracks.get(property, "JP");
                 tracks = tracks.concat(apiresult);
@@ -37,53 +40,61 @@ function SpotifyPlaylistItems({ sdk, trackIds }: { sdk: SpotifyApi, trackIds: st
             
             setTracks(tracks);
             setTrackIds(trackIds);
-        })();
+      })();
 
-      }, [sdk]);
+  }, [sdk]);
     
-      return (
+    return (
         <>
           <div className="content">
-              <PlaylistItems tracks={tracks}/>
+              <PlaylistItems tracks={tracks} playlistName={playlistName}/>
           </div>
         </>
-     );
+    );
   };
 
 interface Props {
     tracks: Track[]
+    playlistName: string
 };
 
 const PlaylistItems: FC<Props> = (props) => {
 
-    const [searchResults, setSearchResults] = useState<Track[]>({} as Track[]);
-    const textRef = useRef<HTMLInputElement>(null);
+    const [searchResults, setSearchResults] = useState<Track[]>([] as Track[]);
+    const [inputStr, setStr] = useState('');
 
-    const handleSearch = () => {
-      
-      const newSearchTerm = textRef.current ? textRef.current.value : "";
-      setSearchResults(props.tracks);
-       // 配列から一致する要素をフィルタリングして検索結果を設定
-      if (newSearchTerm.trim() !== '' || newSearchTerm !== undefined) {
-        const filteredResults = props.tracks.filter((track) =>
-          track.name.includes(newSearchTerm)
-        );
-        setSearchResults(filteredResults);
+    useEffect(() => {
+      if (inputStr != '') {
+        // 曲一覧から一致する要素をフィルタリングして検索結果を設定
+        const filteredResults = props?.tracks?.filter((track) =>
+        track.name.toLowerCase().includes(inputStr.toLowerCase()));
+        if (filteredResults.length == 0) {
+          setSearchResults([])
+        } else {
+          setSearchResults(filteredResults);
+        }
       } else {
-        setSearchResults(props.tracks);
+        setSearchResults(props.tracks)
       }
-    };
-    return <div className="main-area">
-      <div className="search-item-area">
-        <input
-          type="text"
-          placeholder="検索ワードを入力"
-          ref={textRef}
-        />
-        <input type="button" value="送信" onClick={() => handleSearch} />
-      </div>
-      {playListTracks(props.tracks)}
-     </div>;
+    }, [inputStr, props.tracks])
+    return <>
+        <div>
+          <h1>{props.playlistName}</h1>
+        </div>
+        <div className="search-item-area">
+            <input
+              type="text"
+              placeholder="曲タイトル検索"
+              value={inputStr}
+              onChange={event => setStr(event.target.value)}
+            />
+        </div>
+        <label>{searchResults.length}曲/{props.tracks.length}曲</label>
+        <div className="main-area">
+          {playListTracks(searchResults)}
+        </div>
+     </>;
+
 };
 
 const handleButtonClick = (link: string) => window.open(link);
@@ -99,16 +110,16 @@ const playListTracks = (tracks: Track[]) => Object.values(tracks).map((trackItem
         <div role='button' className="trackDetail">
             <div className='item-list-image-area'>
                 <div style={sImageStyles}>
-                    <img className="s-image" src={trackItem.album.images[0].url}></img>
+                    <img className="s-image" src={trackItem?.album?.images[0].url}></img>
                 </div>
             </div>
             <div className='trackInfo'>
                 <div>
                     <p className="trackName">
-                        {trackItem.name}
+                        {trackItem?.name}
                     </p>
                     <div>
-                        <span>{trackItem.artists[0].name}</span>
+                        <span>{trackItem?.artists[0]?.name}</span>
                     </div>
                 </div>
             </div>

@@ -8,7 +8,7 @@ import './App.css'
 
 
 function App() {
-
+  document.title = 'Playlist曲検索';
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={

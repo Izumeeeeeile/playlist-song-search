@@ -1,28 +1,24 @@
-.content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #eeeeee;
-}
-
 .main-area {
-  padding: 3em 7%;
-
+  padding: 1em 7%;
 }
 
 .list-items {
   display: flex;
   cursor: pointer;
   border-radius: 10px;
-  background-color: #87c1e7;
-  border: 2px solid #43546d;
+  background-color: #ffffff;
+  border: 1.5px solid #303f55;
   align-items: center;
   width: 550px;
   height: 120px;
 }
 
+.main-area :hover{
+  background-color: #d1e0e6;
+}
+
 .playlistInfo {
-  color: #eaf0ff;
+  color: rgb(24, 30, 36);
   display: flex;
   flex-direction: column;
   padding-left: 10px;
@@ -30,7 +26,7 @@
 
 .header-info-area {
   width: 400px;
-  height: 120px;
+  height: 100px;
 }
 
 .playlistDetail {
@@ -38,8 +34,14 @@
   width: 100%;
  }
 
+ .list-items a {
+    color: rgb(29, 69, 109);
+    text-decoration: none; 
+ }
+
+
 .playlistName {
-  color: #fff;
+  color: rgb(24, 30, 36);
   text-decoration: none; 
   font-weight: bold;
 }
@@ -58,7 +60,7 @@
 }
 
 .trackInfo {
-  color: #eaf0ff;
+  color: rgb(24, 30, 36);
   display: flex;
   flex-direction: column;
   padding-left: 10px;
@@ -70,7 +72,7 @@
  }
 
 .trackName {
-  color: #fff;
+  color: rgb(24, 30, 36);
   text-decoration: none; 
   font-weight: bold;
 }
