@@ -1,0 +1,36 @@
+.content {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 1280px;
+    margin: auto;
+}
+
+.mainPage {
+    color: #171818;
+}
+
+.pageLink {
+    display: flex;
+    cursor: pointer;
+    border-radius: 10px;
+    width: 187px;
+    box-sizing: border-box;
+    border: 2px solid #aaa;
+}
+
+.pageLink:hover {
+    background-color: #87c1e7;
+}
+
+.pageLink:hover a{
+    color: #ffffff;
+}
+
+.pageLink a {
+    padding-left: 20px;
+    width: 70%;
+    text-decoration: none; 
+}
